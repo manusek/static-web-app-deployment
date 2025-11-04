@@ -27,3 +27,11 @@ module "s3-website-bucket" {
   bucket_name = var.bucket_name
   tags        = var.tags
 }
+
+module "cloudfront-cdn" {
+  source = "./modules/cloudfront-cdn"
+  bucket_id = module.s3-website-bucket.bucket_id
+  origin_bucket_regional_domain_name = module.s3-website-bucket.domain_name
+  index_document = "index.html"
+  tags = var.tags
+}
