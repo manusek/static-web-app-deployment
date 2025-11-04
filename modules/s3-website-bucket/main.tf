@@ -3,15 +3,42 @@ resource "aws_s3_bucket" "website_bucket" {
   tags   = var.tags
 }
 
+# See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html
+data "aws_iam_policy_document" "origin_bucket_policy" {
+  statement {
+    sid    = "AllowCloudFrontServicePrincipalReadWrite"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    actions = [
+      "s3:GetObject",
+    ]
+
+    resources = [
+      "${aws_s3_bucket.website_bucket.arn}/*",
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "b" {
+  bucket = aws_s3_bucket.website_bucket.id
+  policy = data.aws_iam_policy_document.origin_bucket_policy.json
+}
+
+
 resource "aws_s3_bucket_website_configuration" "website_bucket_static_hosting" {
   bucket = aws_s3_bucket.website_bucket.id
 
   index_document {
-    suffix = "index.html"
+    suffix = var.index_document
   }
 
   error_document {
-    key = "error.html"
+    key = var.error_document
   }
 }
 
@@ -27,17 +54,14 @@ resource "aws_s3_object" "website_files" {
   bucket = aws_s3_bucket.website_bucket.id
   key    = var.index_document
   source = "${var.website_content_path}/${var.index_document}" 
-
-  # The filemd5() function is available in Terraform 0.11.12 and later
-  # For Terraform 0.11.11 and earlier, use the md5() function and the file() function:
-  # etag = "${md5(file("path/to/file"))}"
-  etag         = filemd5("${var.website_content_path}/${var.index_document}") 
+  etag   = filemd5("${var.website_content_path}/${var.index_document}") 
+  content_type = "text/html"
 }
 
 output "bucket_id" {
   value = aws_s3_bucket.website_bucket.id
 }
 
-output "bucket_regional_domain_name" {
-    value = aws_s3_bucket.website_bucket.bucket_regional_domain_name
+output "domain_name" {
+  value = aws_s3_bucket.website_bucket.bucket_regional_domain_name
 }
