@@ -3,6 +3,18 @@ resource "aws_s3_bucket" "website_bucket" {
   tags   = var.tags
 }
 
+resource "aws_s3_bucket_website_configuration" "website_bucket_static_hosting" {
+  bucket = aws_s3_bucket.website_bucket.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "error.html"
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "website_bucket_public_access_block" {
   bucket = aws_s3_bucket.website_bucket.id
   block_public_acls       = true
