@@ -1,21 +1,25 @@
-variable "origin_bucket_regional_domain_name" {
-  description = "The regional domain name of the S3 bucket origin."
-  type        = string
+variable "project_name" {
+  type = string
+  description = "The name of the project."
 }
 
-variable "bucket_id" {
-  description = "The ID of the S3 bucket."
-  type        = string
+variable "environment" {
+  type = string
+  description = "The deployment environment (e.g., dev, staging, prod)."
 }
 
-variable "index_document" {
-  description = "The default root object for the distribution."
-  type        = string
-  default     = "index.html"
+variable "s3_bucket_domain_name" {
+  type = string
+  default = "value"
+  description = "The domain name of the S3 bucket (e.g., example.com)."
+}
+
+variable "s3_bucket_regional_domain_name" {
+  type = string
+  description = "The regional domain name of the S3 bucket, provided as an input from an output of another module."
 }
 
 variable "tags" {
+  type = map(string)
   description = "A map of tags to apply to the CloudFront distribution."
-  type        = map(string)
-  default     = {}
-}
+  }
