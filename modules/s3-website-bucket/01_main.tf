@@ -1,13 +1,14 @@
-#s3 bucket 
-resource "aws_s3_bucket" "website_bucket" {
+resource "aws_s3_bucket" "website" {
   bucket = var.bucket_name
   tags   = var.tags
 }
 
-#s3 bucket policy configuration
+                
+###### S3 BUCKET POLICY
+
 data "aws_iam_policy_document" "origin_bucket_policy" {
   statement {
-    sid    = locals.policy_sid
+    sid    = "AllowCloudFrontServicePrincipalReadWrite"
     effect = "Allow"
 
     principals {
@@ -20,33 +21,21 @@ data "aws_iam_policy_document" "origin_bucket_policy" {
     ]
 
     resources = [
-      "${aws_s3_bucket.website_bucket.arn}/*",
+      "${aws_s3_bucket.website.arn}/*",
     ]
   }
 }
 
 resource "aws_s3_bucket_policy" "b" {
-  bucket = aws_s3_bucket.website_bucket.id
+  bucket = aws_s3_bucket.website.id
   policy = data.aws_iam_policy_document.origin_bucket_policy.json
 }
 
 
-#s3 bucket static hosting 
-resource "aws_s3_bucket_website_configuration" "website_bucket_static_hosting" {
-  bucket = aws_s3_bucket.website_bucket.id
+###### S3 BUCKET PUBLIC ACCES BLOCK
 
-  index_document {
-    suffix = var.index_document
-  }
-
-  error_document {
-    key = var.error_document
-  }
-}
-
-#public access block = true
-resource "aws_s3_bucket_public_access_block" "website_bucket_public_access_block" {
-  bucket = aws_s3_bucket.website_bucket.id
+resource "aws_s3_bucket_public_access_block" "acces_block" {
+  bucket = aws_s3_bucket.website.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -54,18 +43,24 @@ resource "aws_s3_bucket_public_access_block" "website_bucket_public_access_block
 }
 
 
+###### S3 BUCKET STATIC HOSTING
+
+resource "aws_s3_bucket_website_configuration" "static_hosting" {
+  bucket = aws_s3_bucket.website.id
+
+  index_document {
+    suffix = local.website_index
+  }
+
+  error_document {
+    key = local.website_error
+  }
+}
+
 resource "aws_s3_object" "website_files" {
-  bucket = aws_s3_bucket.website_bucket.id
-  key    = var.index_document
-  source = "${var.website_content_path}/${var.index_document}" 
-  etag   = filemd5("${var.website_content_path}/${var.index_document}") 
-  content_type = locals.content_type
-}
-
-output "bucket_id" {
-  value = aws_s3_bucket.website_bucket.id
-}
-
-output "domain_name" {
-  value = aws_s3_bucket.website_bucket.bucket_regional_domain_name
+  bucket = aws_s3_bucket.website.id
+  key    = local.website_index
+  source = "${local.content_path}/${local.website_index}" 
+  etag   = filemd5("${local.content_path}/${local.website_index}") 
+  content_type = "text/html"
 }
