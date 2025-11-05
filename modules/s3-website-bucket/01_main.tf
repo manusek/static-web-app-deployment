@@ -1,12 +1,13 @@
+#s3 bucket 
 resource "aws_s3_bucket" "website_bucket" {
   bucket = var.bucket_name
   tags   = var.tags
 }
 
-# See https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html
+#s3 bucket policy configuration
 data "aws_iam_policy_document" "origin_bucket_policy" {
   statement {
-    sid    = "AllowCloudFrontServicePrincipalReadWrite"
+    sid    = locals.policy_sid
     effect = "Allow"
 
     principals {
@@ -30,6 +31,7 @@ resource "aws_s3_bucket_policy" "b" {
 }
 
 
+#s3 bucket static hosting 
 resource "aws_s3_bucket_website_configuration" "website_bucket_static_hosting" {
   bucket = aws_s3_bucket.website_bucket.id
 
@@ -42,6 +44,7 @@ resource "aws_s3_bucket_website_configuration" "website_bucket_static_hosting" {
   }
 }
 
+#public access block = true
 resource "aws_s3_bucket_public_access_block" "website_bucket_public_access_block" {
   bucket = aws_s3_bucket.website_bucket.id
   block_public_acls       = true
@@ -50,12 +53,13 @@ resource "aws_s3_bucket_public_access_block" "website_bucket_public_access_block
   restrict_public_buckets = true
 }
 
+
 resource "aws_s3_object" "website_files" {
   bucket = aws_s3_bucket.website_bucket.id
   key    = var.index_document
   source = "${var.website_content_path}/${var.index_document}" 
   etag   = filemd5("${var.website_content_path}/${var.index_document}") 
-  content_type = "text/html"
+  content_type = locals.content_type
 }
 
 output "bucket_id" {

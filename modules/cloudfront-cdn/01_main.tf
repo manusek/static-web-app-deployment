@@ -1,30 +1,28 @@
+#OAC
 resource "aws_cloudfront_origin_access_control" "default" {
-  name                              = "default-oac"
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
+  name                              = locals.oac_name
+  origin_access_control_origin_type = locals.oac_origin_type
+  signing_behavior                  = locals.signing_behavior
+  signing_protocol                  = locals.signing_protocol
 }
 
-locals {
-  s3_origin_id = "origin-static-web-454"
-}
-
+#CF DISTRIBUTION
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
     domain_name              = var.origin_bucket_regional_domain_name
-    origin_id                = local.s3_origin_id 
+    origin_id                = locals.s3_origin_id
     origin_access_control_id = aws_cloudfront_origin_access_control.default.id
   }
 
   enabled             = true
   is_ipv6_enabled     = true
   comment             = "Some comment"
-  default_root_object = "index.html"
+  default_root_object = locals.default_root_object
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.s3_origin_id
+    target_origin_id = locals.s3_origin_id
 
     forwarded_values {
       query_string = false
@@ -45,7 +43,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     path_pattern     = "/content/immutable/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.s3_origin_id
+    target_origin_id = locals.s3_origin_id
 
     forwarded_values {
       query_string = false
@@ -68,7 +66,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     path_pattern     = "/content/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.s3_origin_id
+    target_origin_id = locals.s3_origin_id
 
     forwarded_values {
       query_string = false
