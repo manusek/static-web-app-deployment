@@ -1,7 +1,9 @@
 provider "aws" {
-
-  region = "eu-central-1"
+  region = local.region
 }
+
+
+###### REMOTE BACKEND CONFIGURATION
 
 terraform {
   required_version = ">= 1.0"
@@ -22,16 +24,22 @@ terraform {
   }
 }
 
-module "s3-website-bucket" {
+
+###### MODULES
+
+module "s3_site" {
   source      = "./modules/s3-website-bucket"
-  bucket_name = var.bucket_name
-  tags        = var.tags
+  
+  bucket_name = local.bucket_name
+  tags        = local.tags
 }
 
-module "cloudfront-cdn" {
-  source = "./modules/cloudfront-cdn"
-  bucket_id = module.s3-website-bucket.bucket_id
-  origin_bucket_regional_domain_name = module.s3-website-bucket.domain_name
-  index_document = var.index_document
-  tags = var.tags
+module "name" {
+  source      = "./modules/cloudfront-cdn"
+  
+  project_name = var.project_name
+  environment  = var.environment
+  s3_bucket_domain_name = module.s3_site.domain_name
+  s3_bucket_regional_domain_name = module.s3_site.regional_domain_name
+  tags = local.tags
 }
