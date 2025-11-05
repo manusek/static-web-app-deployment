@@ -1,28 +1,31 @@
-#OAC
+###### OAC CONFIGURATION
+
 resource "aws_cloudfront_origin_access_control" "default" {
-  name                              = locals.oac_name
-  origin_access_control_origin_type = locals.oac_origin_type
-  signing_behavior                  = locals.signing_behavior
-  signing_protocol                  = locals.signing_protocol
+  name                              = local.oac_name
+  origin_access_control_origin_type = local.oac_origin_type
+  signing_behavior                  = local.signing_behavior
+  signing_protocol                  = local.signing_protocol
 }
 
-#CF DISTRIBUTION
-resource "aws_cloudfront_distribution" "s3_distribution" {
+
+###### CLOUD FRONT DISTRIBUTION
+
+resource "aws_cloudfront_distribution" "cdn" {
   origin {
-    domain_name              = var.origin_bucket_regional_domain_name
-    origin_id                = locals.s3_origin_id
+    domain_name              = var.s3_bucket_domain_name
+    origin_id                = local.s3_origin_id
     origin_access_control_id = aws_cloudfront_origin_access_control.default.id
   }
 
   enabled             = true
   is_ipv6_enabled     = true
-  comment             = "Some comment"
-  default_root_object = locals.default_root_object
+  comment             = local.cf_comment
+  default_root_object = local.default_root_object
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = locals.s3_origin_id
+    target_origin_id = local.s3_origin_id
 
     forwarded_values {
       query_string = false
@@ -43,7 +46,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     path_pattern     = "/content/immutable/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = locals.s3_origin_id
+    target_origin_id = local.s3_origin_id
 
     forwarded_values {
       query_string = false
@@ -66,7 +69,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     path_pattern     = "/content/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = locals.s3_origin_id
+    target_origin_id = local.s3_origin_id
 
     forwarded_values {
       query_string = false
@@ -98,7 +101,4 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 }
 
-output "distribution_arn" {
-  description = "The ARN of the CloudFront distribution."
-  value       = aws_cloudfront_distribution.s3_distribution.arn
-}
+
