@@ -32,6 +32,6 @@ module "cloudfront-cdn" {
   source = "./modules/cloudfront-cdn"
   bucket_id = module.s3-website-bucket.bucket_id
   origin_bucket_regional_domain_name = module.s3-website-bucket.domain_name
-  index_document = "index.html"
+  index_document = var.index_document
   tags = var.tags
 }
