@@ -2,6 +2,10 @@ provider "aws" {
   region = local.region
 }
 
+provider "aws" {
+  alias  = "cloudfront"
+  region = "us-east-1"
+}
 
 ###### REMOTE BACKEND CONFIGURATION
 
@@ -28,18 +32,30 @@ terraform {
 ###### MODULES
 
 module "s3_site" {
-  source      = "./modules/s3-website-bucket"
+  source                            = "./modules/s3-website-bucket"
   
-  bucket_name = local.bucket_name
-  tags        = local.tags
+  bucket_name                       = local.bucket_name
+  tags                              = local.tags
 }
 
-module "name" {
-  source      = "./modules/cloudfront-cdn"
+module "cloudfront" {
+  source                            = "./modules/cloudfront-cdn"
   
+  project_name                      = var.project_name
+  environment                       = var.environment
+  s3_bucket_domain_name             = module.s3_site.domain_name
+  s3_bucket_regional_domain_name    = module.s3_site.regional_domain_name
+  tags                              = local.tags
+  web_acl_id   = module.waf.waf_arn
+}
+
+module "waf" {
+  source = "./modules/waf-security"
+
+  providers = {
+    aws = aws.cloudfront
+  }
+
   project_name = var.project_name
   environment  = var.environment
-  s3_bucket_domain_name = module.s3_site.domain_name
-  s3_bucket_regional_domain_name = module.s3_site.regional_domain_name
-  tags = local.tags
-}
+} 
