@@ -107,6 +107,53 @@ resource "aws_cloudfront_distribution" "cdn" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+
+
+  ###### ERRORS
+
+   # (4xx)
+  custom_error_response {
+    error_code         = 400 # Bad Request
+    response_code      = 400
+    response_page_path = "/error.html"
+  }
+
+  custom_error_response {
+    error_code         = 403 # Forbidden 
+    response_code      = 403
+    response_page_path = "/error.html"
+  }
+
+  custom_error_response {
+    error_code         = 404 # Not Found
+    response_code      = 404
+    response_page_path = "/error.html"
+  }
+  
+  # (5xx)
+  custom_error_response {
+    error_code         = 500 # Internal Server Error
+    response_code      = 500
+    response_page_path = "/error.html"
+  }
+  
+  custom_error_response {
+    error_code         = 502 # Bad Gateway
+    response_code      = 502
+    response_page_path = "/error.html"
+  }
+
+  custom_error_response {
+    error_code         = 503 # Service Unavailable
+    response_code      = 503
+    response_page_path = "/error.html"
+  }
+  
+  custom_error_response {
+    error_code         = 504 # Gateway Timeout
+    response_code      = 504
+    response_page_path = "/error.html"
+  }
 }
 
 
