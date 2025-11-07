@@ -3,11 +3,13 @@ provider "aws" {
   region = "us-east-1"
 }
 
+
+###### IAM ROLE FOR LAMBDA
+
 resource "aws_iam_role" "lambda_edge_role" {
   name = "lambda-edge-role"
 
-  # Terraform's "jsonencode" function converts a
-  # Terraform expression result to valid JSON syntax.
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -27,15 +29,17 @@ resource "aws_iam_role" "lambda_edge_role" {
   }
 }
 
-# 2. Polityka wykonania dla funkcji Lambda
-# Jest to standardowa polityka pozwalająca na zapis logów do CloudWatch.
+
+###### LAMBDA POLICY CONFIGURATION
+
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
   role       = aws_iam_role.lambda_edge_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# 3. Dodanie uprawnień CloudFront do wywoływania funkcji Lambda
-# Jest to kluczowy, brakujący element. CloudFront musi mieć uprawnienia do wywołania funkcji.
+
+###### LAMBDA PERMISSION CONFIGURATION
+
 resource "aws_lambda_permission" "allow_cloudfront" {
   provider      = aws.cloudfront
   statement_id  = "AllowExecutionFromCloudFront"
@@ -44,8 +48,9 @@ resource "aws_lambda_permission" "allow_cloudfront" {
   principal     = "cloudfront.amazonaws.com"
 }
 
-# 4. Kod źródłowy funkcji Lambda
-# Upewnij się, że masz plik 'lambda/add_security_headers.zip' w swoim projekcie Terraform.
+
+###### LAMBDA ADD_HEADERS FUNCTION CONFIGURATION
+
 resource "aws_lambda_function" "add_headers" {
   provider      = aws.cloudfront
   filename      = "${path.module}/lambda/add_headers.zip"
