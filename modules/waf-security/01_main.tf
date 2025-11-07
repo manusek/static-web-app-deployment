@@ -13,6 +13,10 @@ resource "aws_wafv2_web_acl" "waf" {
   description = "WAF for ${var.project_name}"
   scope       = "CLOUDFRONT"
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   default_action {
     allow {}
   }
@@ -22,6 +26,9 @@ resource "aws_wafv2_web_acl" "waf" {
     metric_name                = "${var.project_name}-waf"
     sampled_requests_enabled   = true
   }
+
+
+  ###### WAF RULES
 
   rule {
     name     = "AWSManagedRulesCommonRuleSet"
@@ -41,6 +48,28 @@ resource "aws_wafv2_web_acl" "waf" {
     visibility_config {
       cloudwatch_metrics_enabled = true
       metric_name                = "${var.project_name}-common"
+      sampled_requests_enabled   = true
+    }
+  }
+
+   rule {
+    name     = "RateLimitRule"
+    priority = 2
+
+    action {
+      block {} 
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 100 
+        aggregate_key_type = "IP" 
+      }
+    }
+
+     visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${var.project_name}-limit"
       sampled_requests_enabled   = true
     }
   }
