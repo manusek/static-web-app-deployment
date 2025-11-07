@@ -37,3 +37,12 @@ variable "web_acl_id" {
   type        = string
   default     = null
 }
+
+
+###### LAMBDA VARIABLES
+
+variable "lambda_edge_arn" {
+  description = "ARN of Lambda@Edge function to attach to CloudFront"
+  type        = string
+  default     = null
+}
