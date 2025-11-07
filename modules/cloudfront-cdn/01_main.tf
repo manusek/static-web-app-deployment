@@ -16,7 +16,7 @@ resource "aws_cloudfront_distribution" "cdn" {
     origin_id                = local.s3_origin_id
     origin_access_control_id = aws_cloudfront_origin_access_control.default.id
   }
-  
+
   web_acl_id = var.web_acl_id
 
   enabled             = true
@@ -36,11 +36,17 @@ resource "aws_cloudfront_distribution" "cdn" {
         forward = "none"
       }
     }
-
+ 
     viewer_protocol_policy = "allow-all"
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+
+    lambda_function_association {
+      event_type   = "origin-response"
+      lambda_arn   = var.lambda_edge_arn
+      include_body = false
+    }
   }
 
   # Cache behavior with precedence 0
