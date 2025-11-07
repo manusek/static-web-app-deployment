@@ -64,3 +64,11 @@ resource "aws_s3_object" "website_files" {
   etag   = filemd5("${local.content_path}/${local.website_index}") 
   content_type = "text/html"
 }
+
+resource "aws_s3_object" "website_files_error" {
+  bucket = aws_s3_bucket.website.id
+  key    = local.website_error
+  source = "${local.content_path}/${local.website_error}" 
+  etag   = filemd5("${local.content_path}/${local.website_error}") 
+  content_type = "text/html"
+}
