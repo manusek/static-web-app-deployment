@@ -46,8 +46,9 @@ module "cloudfront" {
   s3_bucket_domain_name             = module.s3_site.domain_name
   s3_bucket_regional_domain_name    = module.s3_site.regional_domain_name
   tags                              = local.tags
-  web_acl_id   = module.waf.waf_arn
-  lambda_edge_arn = module.lambda_edge.lambda_edge_arn
+  web_acl_id                        = module.waf.waf_arn
+  lambda_edge_arn                   = module.lambda_edge.lambda_edge_arn
+  s3_bucket_logging_domain_name     = module.s3_logging.domain_name
 }
 
 module "waf" {
@@ -67,4 +68,11 @@ module "lambda_edge" {
   providers = {
     aws = aws.cloudfront
   }
+}
+
+module "s3_logging" {
+  source = "./modules/s3-logging-bucket"
+
+  bucket_name = local.bucket_name_logs
+  tags = local.tags
 }
