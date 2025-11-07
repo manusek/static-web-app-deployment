@@ -13,6 +13,10 @@ resource "aws_wafv2_web_acl" "waf" {
   description = "WAF for ${var.project_name}"
   scope       = "CLOUDFRONT"
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   default_action {
     allow {}
   }
