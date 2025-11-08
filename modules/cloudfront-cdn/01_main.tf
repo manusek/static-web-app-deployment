@@ -24,6 +24,9 @@ resource "aws_cloudfront_distribution" "cdn" {
   comment             = local.cf_comment
   default_root_object = local.default_root_object
 
+
+  ###### CLOUD FRONT CACHE BEHAVIORS
+
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
@@ -153,6 +156,15 @@ resource "aws_cloudfront_distribution" "cdn" {
     error_code         = 504 # Gateway Timeout
     response_code      = 504
     response_page_path = "/error.html"
+  }
+
+
+  ###### CLOUD FRONT LOGGING CONFIGURATION
+
+   logging_config {
+    bucket          = var.s3_bucket_logging_domain_name
+    include_cookies = false
+    prefix          = "cloudfront-logs/"
   }
 }
 
