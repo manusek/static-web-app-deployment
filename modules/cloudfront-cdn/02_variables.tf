@@ -29,6 +29,11 @@ variable "s3_bucket_regional_domain_name" {
   description = "The regional domain name of the S3 bucket, provided as an input from an output of another module."
 }
 
+variable "s3_bucket_logging_domain_name" {
+  type = string
+  description = "The domain name of the S3 bucket with logs"
+}
+
 
 ###### WAF VARIABLES
 
@@ -46,3 +51,4 @@ variable "lambda_edge_arn" {
   type        = string
   default     = null
 }
+
