@@ -74,5 +74,6 @@ module "s3_logging" {
   source = "./modules/s3-logging-bucket"
 
   bucket_name = local.bucket_name_logs
+  cloudfront_distribution_arn = module.cloudfront.distribution_arn
   tags = local.tags
 }
