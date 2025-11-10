@@ -7,3 +7,8 @@ variable "tags" {
   description = "A map of tags to apply to all resources in this module."
   type        = map(string)
 }
+
+variable "content_type" {
+  description = "The MIME content type of the file."
+  type = string
+}
