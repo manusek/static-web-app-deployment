@@ -1,10 +1,11 @@
 provider "aws" {
-  region = local.region
+  alias = "eu_central"
+  region = local.region_eu_central
 }
 
 provider "aws" {
-  alias  = "cloudfront"
-  region = "us-east-1"
+  alias  = "us_east"
+  region = local.region_us_east
 }
 
 ###### REMOTE BACKEND CONFIGURATION
@@ -36,7 +37,7 @@ module "s3_site" {
   
   bucket_name                       = local.bucket_name
   tags                              = local.tags
-  content_type                      = local.content_type 
+  content_type                      = local.content_type
 }
 
 module "cloudfront" {
@@ -56,7 +57,7 @@ module "waf" {
   source = "./modules/waf-security"
 
   providers = {
-    aws = aws.cloudfront
+    aws = aws.us_east
   }
   project_name = var.project_name
   environment  = var.environment
@@ -92,7 +93,7 @@ module "lambda_edge" {
   source = "./modules/lambda-edge"
 
   providers = {
-    aws = aws.cloudfront
+    aws = aws.us_east
   }
 }
 
@@ -102,4 +103,18 @@ module "s3_logging" {
   bucket_name = local.bucket_name_logs
   cloudfront_distribution_arn = module.cloudfront.distribution_arn
   tags = local.tags
+}
+
+module "cloud_watch" {
+  source = "./modules/cloud-watch"
+
+  providers = {
+    aws = aws.us_east
+  }
+  project_name         = var.project_name
+  environment          = var.environment
+  region               = local.region_us_east
+  waf_acl_metric_name  = module.waf.waf_acl_metric_name
+  waf_rule_metrics     = module.waf.waf_rule_metrics
+  alert_email_endpoint = "kacperkako@gmail.com"
 }
