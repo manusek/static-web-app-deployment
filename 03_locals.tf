@@ -1,6 +1,8 @@
 locals {
-  region = "eu-central-1"
+  region_eu_central = "eu-central-1"
 
+  region_us_east = "us-east-1"
+  
   tags = {
     Project     = var.project_name
     Enviroment  = var.environment
