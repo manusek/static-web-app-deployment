@@ -36,6 +36,7 @@ module "s3_site" {
   
   bucket_name                       = local.bucket_name
   tags                              = local.tags
+  content_type                      = local.content_type 
 }
 
 module "cloudfront" {
@@ -57,9 +58,34 @@ module "waf" {
   providers = {
     aws = aws.cloudfront
   }
-
   project_name = var.project_name
   environment  = var.environment
+  
+  waf_rules = [
+  # Rule 1: AWSManagedRulesCommonRuleSet
+  {
+    name                 = "AWSManagedRulesCommonRuleSet"
+    priority             = 1
+    action_type          = "NONE"
+    metric_suffix        = "common"
+    managed_group_config = {
+      name        = "AWSManagedRulesCommonRuleSet"
+      vendor_name = "AWS"
+    }
+  },
+
+  # Rule 2: RateLimitRule
+  {
+    name                 = "RateLimitRule"
+    priority             = 2
+    action_type          = "BLOCK"
+    metric_suffix        = "limit"
+    rate_limit_config = {
+      limit              = 100
+      aggregate_key_type = "IP"
+    }
+  }
+]
 } 
 
 module "lambda_edge" {
