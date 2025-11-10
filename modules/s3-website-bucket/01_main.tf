@@ -62,7 +62,7 @@ resource "aws_s3_object" "website_files" {
   key    = local.website_index
   source = "${local.content_path}/${local.website_index}" 
   etag   = filemd5("${local.content_path}/${local.website_index}") 
-  content_type = "text/html"
+  content_type = var.content_type
 }
 
 resource "aws_s3_object" "website_files_error" {
@@ -70,5 +70,5 @@ resource "aws_s3_object" "website_files_error" {
   key    = local.website_error
   source = "${local.content_path}/${local.website_error}" 
   etag   = filemd5("${local.content_path}/${local.website_error}") 
-  content_type = "text/html"
+  content_type = var.content_type
 }

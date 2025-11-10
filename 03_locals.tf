@@ -9,5 +9,7 @@ locals {
   bucket_name   = "helloworld-${var.environment}-s3-euc1"
 
   bucket_name_logs = "logsbucket-${var.environment}-s3-euc1"
+
+  content_type = "text/html"
 } 
 
