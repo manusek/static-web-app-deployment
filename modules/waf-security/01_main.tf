@@ -1,14 +1,9 @@
-provider "aws" {
-  alias  = "cloudfront"
-  region = "us-east-1"
-}
 
 ###### WAF CONFIGURATION
 
 data "aws_caller_identity" "current" {}
 
 resource "aws_wafv2_web_acl" "waf" {
-  provider    = aws.cloudfront
   name        = local.waf_name
   description = "WAF for ${var.project_name}"
   scope       = "CLOUDFRONT"
@@ -27,50 +22,60 @@ resource "aws_wafv2_web_acl" "waf" {
     sampled_requests_enabled   = true
   }
 
+  dynamic "rule" {
+    for_each = var.waf_rules
+    content {
+      name     = rule.value.name
+      priority = rule.value.priority
 
-  ###### WAF RULES
+      ###### ACTIONS 
 
-  rule {
-    name     = "AWSManagedRulesCommonRuleSet"
-    priority = 1
+      dynamic "override_action" {
+        for_each = rule.value.action_type == "NONE" ? ["none_config"] : []
+        content {
+          none {}
+        }
+      }
 
-    override_action {
-      none {}
-    }
+      dynamic "action" {
+        for_each = rule.value.action_type == "BLOCK" ? ["block_config"] : []
+        content {
+          block {}
+        }
+      }
 
-    statement {
-      managed_rule_group_statement {
-        name        = "AWSManagedRulesCommonRuleSet"
-        vendor_name = "AWS"
+
+      ###### STATEMENTS
+
+      # Managed Rule Group
+      dynamic "statement" {
+        for_each = rule.value.managed_group_config != null ? ["managed_group_config"] : []
+        content {
+          managed_rule_group_statement {
+            name        = rule.value.managed_group_config.name 
+            vendor_name = rule.value.managed_group_config.vendor_name
+          }
+        }
+      }
+
+      # Rate Based Rule
+      dynamic "statement" {
+        for_each = rule.value.rate_limit_config != null ? ["rate_limit_config"] : []
+        content {
+          rate_based_statement {
+            limit              = rule.value.rate_limit_config.limit
+            aggregate_key_type = rule.value.rate_limit_config.aggregate_key_type
+          }
+        }
+      }
+     
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${var.project_name}-${rule.value.metric_suffix}"
+        sampled_requests_enabled   = true
       }
     }
-
-    visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.project_name}-common"
-      sampled_requests_enabled   = true
-    }
-  }
-
-   rule {
-    name     = "RateLimitRule"
-    priority = 2
-
-    action {
-      block {} 
-    }
-
-    statement {
-      rate_based_statement {
-        limit              = 100 
-        aggregate_key_type = "IP" 
-      }
-    }
-
-     visibility_config {
-      cloudwatch_metrics_enabled = true
-      metric_name                = "${var.project_name}-limit"
-      sampled_requests_enabled   = true
-    }
-  }
+  }  
 }
+
+
