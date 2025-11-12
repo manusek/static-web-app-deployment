@@ -130,6 +130,10 @@ jobs:
         with:
           name: terraform-plan
           path: ./
+      
+      - name: Terraform Init (Download Providers)
+        run: terraform init
+        working-directory: ./
 
       - name: Terraform Apply
         # Używa wcześniej zapisanego pliku planu
