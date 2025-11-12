@@ -8,6 +8,10 @@ on:
   # Pozwala na ręczne uruchomienie pipeline'u z interfejsu GitHub Actions
   workflow_dispatch:
 
+permissions:
+  id-token: write # Wymagane do OIDC
+  contents: read
+
 jobs:
 
   # --- ETAP 1: INIT & WALIDACJA ---
