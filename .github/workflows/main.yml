@@ -98,7 +98,7 @@ jobs:
 
   # --- ETAP 3: APPLY (WYMAGA RĘCZNEGO ZATWIERDZENIA) ---
   apply:
-    if : github.ref == 'refs/heads/main' # Tylko dla gałęzi main
+    # if : github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: plan
     # Użycie "environment" z regułami ochrony (protection rules) dla wymuszenia ręcznej akceptacji
