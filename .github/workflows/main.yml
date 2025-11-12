@@ -87,7 +87,7 @@ jobs:
     environment:
       name: production # Możesz użyć 'staging' lub 'production'
     # Wymaga ręcznego zatwierdzenia przed uruchomieniem
-    requires: manual_approval
+    #requires: manual_approval
 
     # Autentykacja: Zakłada rolę AWS z pełnymi uprawnieniami zapisu
     permissions:
