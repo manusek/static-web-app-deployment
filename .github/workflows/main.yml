@@ -37,12 +37,11 @@ jobs:
 
       - name: Install TFLint
         run: |
-        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
         working-directory: ./
 
       - name: Run TFLint
         run: tflint --init && tflint
-        working-directory: ./
         working-directory: ./
 
   # --- ETAP 2: PLAN ---
