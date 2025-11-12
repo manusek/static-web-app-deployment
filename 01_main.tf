@@ -40,6 +40,10 @@ module "s3_site" {
   content_type = local.content_type
 }
 
+module "s3_test" {
+  source = "./modules/s3-bucket-test"
+}
+
 module "cloudfront" {
   source = "./modules/cloudfront-cdn"
 

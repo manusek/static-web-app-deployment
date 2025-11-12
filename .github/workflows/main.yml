@@ -78,6 +78,7 @@ jobs:
         working-directory: ./
 
       - name: Terraform Plan
+        id: plan
         run: terraform plan -out=tfplan
         working-directory: ./
 
@@ -122,6 +123,14 @@ jobs:
         run: terraform init
         working-directory: ./
 
+        # --- DODAJ TEN KROK ---
+      # Ten krok odświeża lokalną wiedzę o stanie S3 bez generowania nowego pliku planu
+      - name: Terraform Plan Refresh (Verify Plan Stale Status)
+        run: terraform plan -input=false -refresh-only -out=tfplan.refreshed
+        working-directory: ./
+      # ------------------------
+
       - name: Terraform Apply
-        run: terraform apply tfplan
+        # Używamy świeżo odświeżonego planu 'tfplan.refreshed'
+        run: terraform apply -auto-approve tfplan.refreshed
         working-directory: ./
