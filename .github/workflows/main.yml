@@ -29,7 +29,10 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+        env:
+          AWS_EC2_METADATA_DISABLED: true
         working-directory: ./ # Upewnij się, że to jest ścieżka do Twojego kodu .tf
+
 
       - name: Terraform Fmt Check
         run: terraform fmt -check
