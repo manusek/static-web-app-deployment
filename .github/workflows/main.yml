@@ -1,0 +1,119 @@
+name: Terraform AWS Infrastructure CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  # Pozwala na ręczne uruchomienie pipeline'u z interfejsu GitHub Actions
+  workflow_dispatch:
+
+jobs:
+
+  # --- ETAP 1: INIT & WALIDACJA ---
+  init-validate:
+    runs-on: ubuntu-latest
+    # To zadanie nie wymaga ról AWS, ponieważ nie komunikuje się ze zdalnym backendem
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.x
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./ # Upewnij się, że to jest ścieżka do Twojego kodu .tf
+
+      - name: Terraform Fmt Check
+        run: terraform fmt -check
+        working-directory: ./
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ./
+
+      - name: Install tflint
+        uses: reviewdog/install-tflint@v0
+
+      - name: Run tflint
+        run: tflint
+        working-directory: ./
+
+  # --- ETAP 2: PLAN ---
+  plan:
+    runs-on: ubuntu-latest
+    needs: init-validate # Uruchamia się tylko jeśli init-validate zakończy się sukcesem
+
+    # Autentykacja: Zakłada rolę AWS przeznaczoną tylko do odczytu/planowania
+    permissions:
+      id-token: write # Wymagane dla OIDC
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials for Plan Role (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::100403449592:role/TerraformPlanRole # ZMIEŃ NA SWOJĄ ROLĘ PLAN
+          aws-region: eu-central-1 # ZMIEŃ NA SWÓJ REGION
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        working-directory: ./
+
+      # Zapisanie planu jako artefaktu, aby można go było użyć w etapie Apply
+      - name: Upload Terraform Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: ./tfplan
+          retention-days: 1
+
+  # --- ETAP 3: APPLY (WYMAGA RĘCZNEGO ZATWIERDZENIA) ---
+  apply:
+    runs-on: ubuntu-latest
+    needs: plan
+    # Użycie "environment" z regułami ochrony (protection rules) dla wymuszenia ręcznej akceptacji
+    environment:
+      name: production # Możesz użyć 'staging' lub 'production'
+    # Wymaga ręcznego zatwierdzenia przed uruchomieniem
+    requires: manual_approval
+
+    # Autentykacja: Zakłada rolę AWS z pełnymi uprawnieniami zapisu
+    permissions:
+      id-token: write # Wymagane dla OIDC
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials for Apply Role (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::100403449592:role/TerraformApplyRole # ZMIEŃ NA SWOJĄ ROLĘ APPLY
+          aws-region: eu-central-1 # ZMIEŃ NA SWÓJ REGION
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Pobranie artefaktu planu z poprzedniego etapu
+      - name: Download Terraform Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: ./
+
+      - name: Terraform Apply
+        # Używa wcześniej zapisanego pliku planu
+        run: terraform apply tfplan
+        working-directory: ./
