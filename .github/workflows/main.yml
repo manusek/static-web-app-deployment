@@ -35,11 +35,14 @@ jobs:
         run: terraform validate
         working-directory: ./
 
-      - name: Install tflint
-        uses: reviewdog/install-tflint@v0
+      - name: Install TFLint
+        run: |
+        curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+        working-directory: ./
 
-      - name: Run tflint
-        run: tflint
+      - name: Run TFLint
+        run: tflint --init && tflint
+        working-directory: ./
         working-directory: ./
 
   # --- ETAP 2: PLAN ---
