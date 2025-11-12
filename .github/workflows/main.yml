@@ -5,29 +5,26 @@ on:
     branches:
       - develop
       - main
-  # Pozwala na ręczne uruchomienie pipeline'u z interfejsu GitHub Actions
   workflow_dispatch:
 
 permissions:
-  id-token: write # Wymagane do OIDC
+  id-token: write
   contents: read
 
 jobs:
 
-  # --- ETAP 1: INIT & WALIDACJA ---
+  ##### INIT & VALIDATE
   init-validate:
     runs-on: ubuntu-latest
-    # To zadanie nie wymaga ról AWS, ponieważ nie komunikuje się ze zdalnym backendem
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-         # --- [DODAJ TEN KROK TUTAJ] Konfiguracja OIDC ---
       - name: Configure AWS Credentials for Init/Validate Role (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::100403449592:role/TerraformPlanRole # Użyj roli planowania
-          aws-region: eu-central-1 # ZMIEŃ NA SWÓJ REGION
+          role-to-assume: arn:aws:iam::100403449592:role/TerraformPlanRole
+          aws-region: eu-central-1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -38,7 +35,7 @@ jobs:
         run: terraform init
         env:
           AWS_EC2_METADATA_DISABLED: true
-        working-directory: ./ # Upewnij się, że to jest ścieżka do Twojego kodu .tf
+        working-directory: ./ 
 
 
       - name: Terraform Fmt Check
@@ -58,14 +55,13 @@ jobs:
         run: tflint --init && tflint
         working-directory: ./
 
-  # --- ETAP 2: PLAN ---
+  ##### PLAN
   plan:
     runs-on: ubuntu-latest
-    needs: init-validate # Uruchamia się tylko jeśli init-validate zakończy się sukcesem
+    needs: init-validate 
 
-    # Autentykacja: Zakłada rolę AWS przeznaczoną tylko do odczytu/planowania
     permissions:
-      id-token: write # Wymagane dla OIDC
+      id-token: write 
       contents: read
     steps:
       - name: Checkout repository
@@ -74,8 +70,8 @@ jobs:
       - name: Configure AWS Credentials for Plan Role (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::100403449592:role/TerraformPlanRole # ZMIEŃ NA SWOJĄ ROLĘ PLAN
-          aws-region: eu-central-1 # ZMIEŃ NA SWÓJ REGION
+          role-to-assume: arn:aws:iam::100403449592:role/TerraformPlanRole 
+          aws-region: eu-central-1 
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -88,7 +84,6 @@ jobs:
         run: terraform plan -out=tfplan
         working-directory: ./
 
-      # Zapisanie planu jako artefaktu, aby można go było użyć w etapie Apply
       - name: Upload Terraform Plan Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -96,20 +91,16 @@ jobs:
           path: ./tfplan
           retention-days: 1
 
-  # --- ETAP 3: APPLY (WYMAGA RĘCZNEGO ZATWIERDZENIA) ---
+  ##### APPLY 
   apply:
     # if : github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: plan
-    # Użycie "environment" z regułami ochrony (protection rules) dla wymuszenia ręcznej akceptacji
     environment:
       name: production # Możesz użyć 'staging' lub 'production'
-    # Wymaga ręcznego zatwierdzenia przed uruchomieniem
-    #requires: manual_approval
 
-    # Autentykacja: Zakłada rolę AWS z pełnymi uprawnieniami zapisu
     permissions:
-      id-token: write # Wymagane dla OIDC
+      id-token: write 
       contents: read
     steps:
       - name: Checkout repository
@@ -118,13 +109,12 @@ jobs:
       - name: Configure AWS Credentials for Apply Role (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::100403449592:role/TerraformApplyRole # ZMIEŃ NA SWOJĄ ROLĘ APPLY
-          aws-region: eu-central-1 # ZMIEŃ NA SWÓJ REGION
+          role-to-assume: arn:aws:iam::100403449592:role/TerraformApplyRole 
+          aws-region: eu-central-1 
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # Pobranie artefaktu planu z poprzedniego etapu
       - name: Download Terraform Plan Artifact
         uses: actions/download-artifact@v4
         with:
@@ -136,6 +126,5 @@ jobs:
         working-directory: ./
 
       - name: Terraform Apply
-        # Używa wcześniej zapisanego pliku planu
         run: terraform apply tfplan
         working-directory: ./
